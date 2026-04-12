@@ -54,7 +54,17 @@
             align-items: center;
             justify-content: center;
             flex-wrap: wrap;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            margin-left: -20px;
+            margin-right: -20px;
+            padding: 12px 20px;
             margin-bottom: 15px;
+            background: rgba(22, 33, 62, 0.92);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border-bottom: 1px solid rgba(255,255,255,0.08);
         }
 
         .plan-controls button {
@@ -276,6 +286,7 @@
         }
         body.light-mode h1 { color: #1e40af; }
         body.light-mode .lead { color: #666; }
+        body.light-mode .plan-controls { background: rgba(248, 249, 250, 0.92); border-bottom-color: rgba(0,0,0,0.08); }
         body.light-mode .plan-controls button { color: #1a1a1a; background: rgba(59,130,246,0.08); }
         body.light-mode .plan-controls button:hover { background: rgba(59,130,246,0.2); }
         body.light-mode .plan-controls button.primary { color: #1a1a1a; background: rgba(16,185,129,0.12); }
