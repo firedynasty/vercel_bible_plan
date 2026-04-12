@@ -382,6 +382,80 @@
         body.light-mode .sheet-picker-item { color: #333; }
         body.light-mode .sheet-picker-item:hover { background: rgba(59,130,246,0.1); }
 
+        /* Start Date Modal */
+        .start-date-modal { width: 380px; }
+        .start-date-body { padding: 18px 20px 20px; }
+        .start-date-hint { margin: 0 0 14px; color: #aaa; font-size: 0.88rem; line-height: 1.45; }
+        .start-date-input {
+            width: 100%;
+            padding: 10px 12px;
+            font-size: 15px;
+            border: 2px solid rgba(255,255,255,0.2);
+            border-radius: 8px;
+            background: rgba(255,255,255,0.08);
+            color: #fff;
+            box-sizing: border-box;
+            color-scheme: dark;
+        }
+        .start-date-input:focus { outline: none; border-color: #3B82F6; }
+        .start-date-info {
+            margin: 12px 0 16px;
+            font-size: 0.9rem;
+            color: #a8d8ea;
+            min-height: 1.2em;
+        }
+        .start-date-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+        .start-date-actions button {
+            flex: 1;
+            min-width: 80px;
+            padding: 10px 14px;
+            font-size: 14px;
+            font-weight: 500;
+            border: 2px solid rgba(59,130,246,0.5);
+            border-radius: 8px;
+            background: rgba(59,130,246,0.15);
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .start-date-actions button:hover { background: rgba(59,130,246,0.3); border-color: #3B82F6; }
+        .start-date-actions button.primary { background: rgba(16,185,129,0.2); border-color: rgba(16,185,129,0.6); }
+        .start-date-actions button.primary:hover { background: rgba(16,185,129,0.35); }
+
+        body.light-mode .start-date-hint { color: #666; }
+        body.light-mode .start-date-input { background: #fff; color: #1a1a1a; border-color: rgba(0,0,0,0.2); color-scheme: light; }
+        body.light-mode .start-date-info { color: #1e40af; }
+        body.light-mode .start-date-actions button { color: #1a1a1a; background: rgba(59,130,246,0.08); }
+        body.light-mode .start-date-actions button:hover { background: rgba(59,130,246,0.2); }
+        body.light-mode .start-date-actions button.primary { color: #1a1a1a; background: rgba(16,185,129,0.12); }
+        body.light-mode .start-date-actions button.primary:hover { background: rgba(16,185,129,0.25); }
+
+        /* Loading state */
+        .loading-wrap {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 20px;
+            color: #888;
+        }
+        .loading-spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid rgba(168, 216, 234, 0.18);
+            border-top-color: #a8d8ea;
+            border-radius: 50%;
+            animation: plan-spin 0.9s linear infinite;
+            margin-bottom: 16px;
+        }
+        @keyframes plan-spin { to { transform: rotate(360deg); } }
+        body.light-mode .loading-spinner { border-color: rgba(30, 64, 175, 0.15); border-top-color: #1e40af; }
+        body.light-mode .loading-wrap { color: #666; }
+
+        /* Date column */
+        #plan-table .col-date { color: #f59e0b; white-space: nowrap; font-variant-numeric: tabular-nums; }
+        body.light-mode #plan-table .col-date { color: #b45309; }
+
         @media (max-width: 768px) {
             .main-content { padding: 15px; padding-top: 60px; }
             #plan-table th, #plan-table td { padding: 8px 6px; font-size: 0.88rem; }
@@ -398,9 +472,10 @@
         <p class="lead">Click a reading to open it in the Bible app. Click the <strong>Read</strong> column to mark a day done.</p>
 
         <div class="plan-controls">
-            <button onclick="jumpPrevUnread()">&larr; Prev unread</button>
             <button class="primary" onclick="jumpFirstUnread()">&#10149; First unread</button>
             <button onclick="jumpNextUnread()">Next unread &rarr;</button>
+            <button onclick="jumpToday()">&#128205; Today</button>
+            <button onclick="openStartDateModal()">&#128197; Start date</button>
             <button onclick="downloadCsv()">&#128190; Download CSV</button>
         </div>
 
@@ -431,6 +506,25 @@
         </div>
     </div>
 
+    <div id="startDateOverlay" class="sheet-picker-overlay" onclick="closeStartDateModal()">
+        <div class="sheet-picker-modal start-date-modal" onclick="event.stopPropagation()">
+            <div class="sheet-picker-header">
+                <span>Set Start Date</span>
+                <button onclick="closeStartDateModal()">&#10005;</button>
+            </div>
+            <div class="start-date-body">
+                <p class="start-date-hint">Pick the date you started (or plan to start) day&nbsp;1 of the M'Cheyne plan. We'll use it to compute today's reading.</p>
+                <input type="date" id="startDateInput" class="start-date-input" oninput="updateStartDateInfo()" />
+                <div id="startDateInfo" class="start-date-info"></div>
+                <div class="start-date-actions">
+                    <button class="primary" onclick="saveStartDate()">Save</button>
+                    <button onclick="clearStartDate()">Clear</button>
+                    <button onclick="closeStartDateModal()">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="toast" class="toast-notification">Saved</div>
 
     <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js'></script>
@@ -442,7 +536,9 @@
         const BIBLE_APP_URL = 'https://bible-cross-reference.vercel.app/';
         const LS_MARKS_KEY = 'mcheyne-marks-v1';
         const LS_THEME_KEY = 'bible-plan-theme';
+        const LS_START_DATE_KEY = 'mcheyne-start-date-v1';
         const DEFAULT_PLAN_URL = 'mcheyne.csv';
+        const DOW_SHORT = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
         // ============ STATE ============
         var planHeader = [];
@@ -461,6 +557,107 @@
         function escHtml(s) {
             return String(s == null ? '' : s)
                 .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+
+        // ============ START DATE ============
+        function getStartDateIso() {
+            try { return localStorage.getItem(LS_START_DATE_KEY) || null; } catch (e) { return null; }
+        }
+        function getStartDate() {
+            var iso = getStartDateIso();
+            if (!iso) return null;
+            var d = new Date(iso + 'T00:00:00');
+            return isNaN(d.getTime()) ? null : d;
+        }
+        function saveStartDateIso(iso) {
+            try {
+                if (iso) localStorage.setItem(LS_START_DATE_KEY, iso);
+                else localStorage.removeItem(LS_START_DATE_KEY);
+            } catch (e) {}
+        }
+        function dateForDay(dayNum) {
+            var start = getStartDate();
+            if (!start) return null;
+            var n = parseInt(dayNum, 10);
+            if (isNaN(n)) return null;
+            var d = new Date(start.getFullYear(), start.getMonth(), start.getDate() + (n - 1));
+            return d;
+        }
+        function formatDayDate(dayNum) {
+            var d = dateForDay(dayNum);
+            if (!d) return '';
+            var mm = String(d.getMonth() + 1).padStart(2, '0');
+            var dd = String(d.getDate()).padStart(2, '0');
+            return d.getFullYear() + '-' + mm + '-' + dd + ' (' + DOW_SHORT[d.getDay()] + ')';
+        }
+        function todayDayNumber() {
+            var start = getStartDate();
+            if (!start) return null;
+            var now = new Date();
+            var startMid = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+            var nowMid = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            var diff = Math.floor((nowMid - startMid) / 86400000) + 1;
+            if (diff < 1) return 1;
+            if (diff > 365) return 365;
+            return diff;
+        }
+
+        function openStartDateModal() {
+            document.getElementById('startDateInput').value = getStartDateIso() || '';
+            updateStartDateInfo();
+            document.getElementById('startDateOverlay').classList.add('open');
+        }
+        function closeStartDateModal() {
+            document.getElementById('startDateOverlay').classList.remove('open');
+        }
+        function updateStartDateInfo() {
+            var val = document.getElementById('startDateInput').value;
+            var info = document.getElementById('startDateInfo');
+            if (!val) { info.textContent = ''; return; }
+            var d = new Date(val + 'T00:00:00');
+            if (isNaN(d.getTime())) { info.textContent = ''; return; }
+            var now = new Date();
+            var startMid = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+            var nowMid = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            var diff = Math.floor((nowMid - startMid) / 86400000) + 1;
+            if (diff < 1) info.textContent = 'Plan starts in ' + (1 - diff) + ' day(s).';
+            else if (diff > 365) info.textContent = 'Plan ended (would be day ' + diff + ').';
+            else info.textContent = 'Today is day ' + diff + ' of 365 (' + DOW_SHORT[now.getDay()] + ').';
+        }
+        function saveStartDate() {
+            var val = document.getElementById('startDateInput').value;
+            if (!val) { showToast('Pick a date first'); return; }
+            saveStartDateIso(val);
+            closeStartDateModal();
+            renderPlanTableWithLoading(500);
+            showToast('Start date saved');
+        }
+        function clearStartDate() {
+            saveStartDateIso(null);
+            document.getElementById('startDateInput').value = '';
+            updateStartDateInfo();
+            renderPlanTableWithLoading(500);
+            showToast('Start date cleared');
+        }
+        function showTableLoading(message) {
+            var container = document.getElementById('table-container');
+            if (!container) return;
+            container.innerHTML =
+                '<div class="loading-wrap"><div class="loading-spinner"></div><p>' +
+                escHtml(message || 'Loading reading plan\u2026') + '</p></div>';
+        }
+        function renderPlanTableWithLoading(ms) {
+            showTableLoading();
+            setTimeout(renderPlanTable, ms == null ? 500 : ms);
+        }
+        function jumpToday() {
+            var d = todayDayNumber();
+            if (d == null) {
+                showToast('Set a start date first');
+                openStartDateModal();
+                return;
+            }
+            jumpToRow(d);
         }
 
         function findColumnIndex(name, fallback) {
@@ -549,6 +746,7 @@
 
             var dayIdx = findColumnIndex('day', 0);
             var readIdx = findColumnIndex('read', planHeader.length - 1);
+            var showDate = getStartDate() != null;
 
             var html = '<div style="overflow-x:auto"><table id="plan-table" class="table table-bordered table-striped"><thead><tr>';
             planHeader.forEach(function(h, i) {
@@ -556,6 +754,9 @@
                 if (i === dayIdx) cls = 'col-day';
                 else if (i === readIdx) cls = 'col-read';
                 html += '<th class="' + cls + '">' + escHtml(h) + '</th>';
+                if (showDate && i === dayIdx) {
+                    html += '<th class="col-date">Date</th>';
+                }
             });
             html += '</tr></thead><tbody>';
 
@@ -566,6 +767,9 @@
                 row.forEach(function(cell, i) {
                     if (i === dayIdx) {
                         html += '<td class="col-day">' + escHtml(cell) + '</td>';
+                        if (showDate) {
+                            html += '<td class="col-date">' + escHtml(formatDayDate(day)) + '</td>';
+                        }
                     } else if (i === readIdx) {
                         html += '<td class="col-read" data-day="' + escHtml(day) + '">' + (read ? 'X' : '') + '</td>';
                     } else {
@@ -670,6 +874,7 @@
             }
             var dayIdx = findColumnIndex('day', 0);
             var readIdx = findColumnIndex('read', planHeader.length - 1);
+            var showDate = getStartDate() != null;
 
             function csvField(v) {
                 var s = v == null ? '' : String(v);
@@ -677,11 +882,14 @@
                 return s;
             }
 
-            var lines = [planHeader.map(csvField).join(',')];
+            var header = planHeader.slice();
+            if (showDate) header.splice(dayIdx + 1, 0, 'date');
+            var lines = [header.map(csvField).join(',')];
             planRows.forEach(function(row) {
                 var out = row.slice();
                 var day = out[dayIdx];
                 out[readIdx] = isDayRead(day) ? 'X' : '';
+                if (showDate) out.splice(dayIdx + 1, 0, formatDayDate(day));
                 lines.push(out.map(csvField).join(','));
             });
             var blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8' });
@@ -710,7 +918,7 @@
             var readIdx = findColumnIndex('read', planHeader.length - 1);
             mergeCsvMarksIntoStorage(planRows, readIdx, dayIdx);
 
-            renderPlanTable();
+            renderPlanTableWithLoading(500);
         }
 
         async function autoLoadPlan() {
@@ -935,11 +1143,13 @@
             $('#csv-file').change(handleFileSelect);
             loadTheme();
             loadMarks();
+            showTableLoading();
             await autoLoadPlan();
             setTimeout(function() {
-                var d = firstUnreadDay();
+                var d = todayDayNumber();
+                if (d == null) d = firstUnreadDay();
                 if (d != null) jumpToRow(d);
-            }, 300);
+            }, 650);
         });
     </script>
 </body>
