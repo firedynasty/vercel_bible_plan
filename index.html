@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bible Reading Plan</title>
+    <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.0.0-beta/css/bootstrap.min.css'>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: system-ui, -apple-system, "Helvetica Neue", sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            color: #fff;
+        }
+
+        .table { color: #fff; }
+        .table-striped tbody tr:nth-of-type(odd) { background-color: rgba(255,255,255,0.05); }
+        .table-striped tbody tr:nth-of-type(even) { background-color: rgba(255,255,255,0.02); }
+        .table-bordered { border: 1px solid rgba(255,255,255,0.2); }
+        .table-bordered td, .table-bordered th { border: 1px solid rgba(255,255,255,0.15); }
+        .table thead th {
+            background-color: rgba(59,130,246,0.3);
+            border-color: rgba(255,255,255,0.2);
+            color: #a8d8ea;
+        }
+
+        .main-content {
+            padding: 20px;
+            padding-top: 60px;
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            margin-bottom: 8px;
+            color: #a8d8ea;
+            text-align: center;
+        }
+
+        .lead {
+            color: #888;
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 0.92rem;
+        }
+
+        .plan-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+
+        .plan-controls button {
+            background: rgba(59,130,246,0.15);
+            border: 2px solid rgba(59,130,246,0.5);
+            border-radius: 8px;
+            padding: 10px 16px;
+            color: #fff;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .plan-controls button:hover {
+            background: rgba(59,130,246,0.3);
+            border-color: #3B82F6;
+        }
+
+        .plan-controls button.primary {
+            background: rgba(16,185,129,0.2);
+            border-color: rgba(16,185,129,0.6);
+        }
+
+        .plan-controls button.primary:hover {
+            background: rgba(16,185,129,0.35);
+        }
+
+        .file-input-wrapper {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+
+        .file-input-wrapper input[type="file"] {
+            background: rgba(255,255,255,0.1);
+            border: 2px dashed rgba(255,255,255,0.3);
+            border-radius: 8px;
+            padding: 10px 16px;
+            color: #fff;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .file-input-wrapper input[type="file"]:hover {
+            border-color: #3B82F6;
+            background: rgba(59,130,246,0.1);
+        }
+
+        .choose-sheet-btn {
+            background: rgba(59,130,246,0.15);
+            border: 2px solid rgba(59,130,246,0.5);
+            border-radius: 8px;
+            padding: 10px 16px;
+            color: #fff;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+
+        .choose-sheet-btn:hover {
+            background: rgba(59,130,246,0.3);
+            border-color: #3B82F6;
+        }
+
+        .gsheets-wrapper {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+            padding: 12px;
+            background: rgba(255,255,255,0.04);
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .gsheets-wrapper input[type="text"] {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 6px;
+            padding: 8px 12px;
+            color: #fff;
+            font-size: 14px;
+            min-width: 200px;
+        }
+
+        .gsheets-wrapper input[type="text"]::placeholder {
+            color: rgba(255,255,255,0.5);
+        }
+
+        .gsheets-btn {
+            background: rgba(66,133,244,0.2);
+            border: 2px solid rgba(66,133,244,0.6);
+            border-radius: 6px;
+            padding: 8px 16px;
+            color: #fff;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .gsheets-btn:hover:not(:disabled) {
+            background: rgba(66,133,244,0.35);
+        }
+
+        .gsheets-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .gsheets-status {
+            width: 100%;
+            text-align: center;
+            font-size: 12px;
+            color: rgba(255,255,255,0.7);
+            min-height: 16px;
+        }
+
+        #table-container {
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        #table-container p {
+            color: #888;
+            text-align: center;
+            padding: 40px;
+        }
+
+        #plan-table { width: 100%; }
+        #plan-table th, #plan-table td {
+            padding: 10px 12px;
+            text-align: left;
+            transition: background-color 0.2s;
+        }
+        #plan-table .col-day {
+            text-align: center;
+            width: 60px;
+            color: #a8d8ea;
+            font-weight: 600;
+        }
+        #plan-table .col-ref {
+            cursor: pointer;
+            text-decoration: underline;
+            text-decoration-color: rgba(168,216,234,0.3);
+            text-underline-offset: 3px;
+        }
+        #plan-table .col-ref:hover {
+            color: #a8d8ea;
+            text-decoration-color: #a8d8ea;
+            background-color: rgba(59,130,246,0.18) !important;
+        }
+        #plan-table .col-read {
+            text-align: center;
+            width: 70px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 1.15rem;
+            color: #10B981;
+            user-select: none;
+        }
+        #plan-table .col-read:hover {
+            background-color: rgba(16,185,129,0.2) !important;
+        }
+        #plan-table tr.is-read .col-day,
+        #plan-table tr.is-read .col-ref {
+            opacity: 0.45;
+        }
+        #plan-table tr.highlight-row {
+            background-color: rgba(255,193,7,0.18) !important;
+            box-shadow: inset 3px 0 0 #ffc107;
+        }
+
+        .toast-notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #10B981;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 1000;
+            font-weight: 500;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        .toast-notification.show { opacity: 1; }
+
+        .theme-toggle-btn {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+            padding: 8px 16px;
+            background: #ff9800;
+            color: #000;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .theme-toggle-btn:hover { background: #f57c00; }
+
+        /* Light mode */
+        body.light-mode {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
+            color: #333;
+        }
+        body.light-mode h1 { color: #1e40af; }
+        body.light-mode .lead { color: #666; }
+        body.light-mode .plan-controls button { color: #1a1a1a; background: rgba(59,130,246,0.08); }
+        body.light-mode .plan-controls button:hover { background: rgba(59,130,246,0.2); }
+        body.light-mode .plan-controls button.primary { color: #1a1a1a; background: rgba(16,185,129,0.12); }
+        body.light-mode .plan-controls button.primary:hover { background: rgba(16,185,129,0.25); }
+        body.light-mode #table-container { background: rgba(255,255,255,0.8); border: 1px solid #ddd; }
+        body.light-mode #table-container p { color: #666; }
+        body.light-mode .table { color: #333; }
+        body.light-mode .table-striped tbody tr:nth-of-type(odd) { background-color: rgba(0,0,0,0.03); }
+        body.light-mode .table-striped tbody tr:nth-of-type(even) { background-color: rgba(0,0,0,0.01); }
+        body.light-mode .table-bordered { border: 1px solid rgba(0,0,0,0.15); }
+        body.light-mode .table-bordered td, body.light-mode .table-bordered th { border: 1px solid rgba(0,0,0,0.1); }
+        body.light-mode .table thead th { background-color: rgba(59,130,246,0.15); color: #1e40af; }
+        body.light-mode #plan-table .col-day { color: #1e40af; }
+        body.light-mode #plan-table .col-ref:hover { color: #1e40af; background-color: rgba(59,130,246,0.1) !important; }
+        body.light-mode #plan-table .col-read { color: #059669; }
+        body.light-mode #plan-table .col-read:hover { background-color: rgba(16,185,129,0.15) !important; }
+        body.light-mode #plan-table tr.highlight-row { background-color: rgba(255,193,7,0.25) !important; }
+        body.light-mode .file-input-wrapper input[type="file"] { background: #fff; border: 2px dashed #ccc; color: #333; }
+        body.light-mode .file-input-wrapper input[type="file"]:hover { border-color: #3B82F6; background: rgba(59,130,246,0.05); }
+        body.light-mode .choose-sheet-btn { color: #1a1a1a; background: rgba(59,130,246,0.1); }
+        body.light-mode .choose-sheet-btn:hover { background: rgba(59,130,246,0.2); }
+        body.light-mode .gsheets-wrapper { background: rgba(0,0,0,0.03); border-color: rgba(0,0,0,0.08); }
+        body.light-mode .gsheets-wrapper input[type="text"] { background: #fff; border-color: rgba(0,0,0,0.2); color: #1a1a1a; }
+        body.light-mode .gsheets-wrapper input[type="text"]::placeholder { color: rgba(0,0,0,0.4); }
+        body.light-mode .gsheets-btn { color: #1a1a1a; background: rgba(66,133,244,0.1); }
+        body.light-mode .gsheets-btn:hover:not(:disabled) { background: rgba(66,133,244,0.2); }
+        body.light-mode .gsheets-status { color: rgba(0,0,0,0.6); }
+        body.light-mode .theme-toggle-btn { background: #333; color: #fff; }
+        body.light-mode .theme-toggle-btn:hover { background: #555; }
+
+        /* Sheet Picker Modal */
+        .sheet-picker-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+        .sheet-picker-overlay.open { display: flex; }
+        .sheet-picker-modal {
+            background: #1a1a2e;
+            border: 1px solid #333;
+            border-radius: 12px;
+            width: 360px;
+            max-height: 80vh;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+        }
+        .sheet-picker-header {
+            padding: 15px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            border-bottom: 1px solid #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #a8d8ea;
+        }
+        .sheet-picker-header button {
+            background: transparent;
+            border: none;
+            color: #888;
+            cursor: pointer;
+            font-size: 18px;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+        .sheet-picker-header button:hover {
+            color: #fff;
+            background: rgba(255,255,255,0.1);
+        }
+        .sheet-picker-list {
+            padding: 10px;
+            overflow-y: auto;
+            max-height: calc(80vh - 60px);
+        }
+        .sheet-picker-item {
+            padding: 12px 16px;
+            cursor: pointer;
+            border-radius: 6px;
+            margin-bottom: 4px;
+            color: #fff;
+            transition: background-color 0.15s;
+        }
+        .sheet-picker-item:hover { background: rgba(59,130,246,0.3); }
+        body.light-mode .sheet-picker-modal { background: #fff; border-color: #ddd; box-shadow: 0 8px 32px rgba(0,0,0,0.15); }
+        body.light-mode .sheet-picker-header { border-bottom-color: #ddd; color: #1e40af; }
+        body.light-mode .sheet-picker-header button { color: #999; }
+        body.light-mode .sheet-picker-header button:hover { color: #333; background: rgba(0,0,0,0.05); }
+        body.light-mode .sheet-picker-item { color: #333; }
+        body.light-mode .sheet-picker-item:hover { background: rgba(59,130,246,0.1); }
+
+        @media (max-width: 768px) {
+            .main-content { padding: 15px; padding-top: 60px; }
+            #plan-table th, #plan-table td { padding: 8px 6px; font-size: 0.88rem; }
+            #plan-table .col-day { width: 40px; }
+            #plan-table .col-read { width: 50px; }
+        }
+    </style>
+</head>
+<body>
+    <button class="theme-toggle-btn" id="themeToggle" onclick="toggleTheme()">&#9788; Light</button>
+
+    <div class="main-content">
+        <h1>M'Cheyne Reading Plan</h1>
+        <p class="lead">Click a reading to open it in the Bible app. Click the <strong>Read</strong> column to mark a day done.</p>
+
+        <div class="plan-controls">
+            <button onclick="jumpPrevUnread()">&larr; Prev unread</button>
+            <button class="primary" onclick="jumpFirstUnread()">&#10149; First unread</button>
+            <button onclick="jumpNextUnread()">Next unread &rarr;</button>
+            <button onclick="downloadCsv()">&#128190; Download CSV</button>
+        </div>
+
+        <div class="file-input-wrapper">
+            <input type="file" id="csv-file" accept=".csv,.xlsx,.xls" />
+            <button id="chooseSheetBtn" class="choose-sheet-btn" onclick="reopenSheetPicker()" style="display:none;">&#128196; Choose Sheet</button>
+        </div>
+
+        <div class="gsheets-wrapper">
+            <button class="gsheets-btn" id="gsheetsAuthBtn" onclick="gdriveSignIn()">Sign in with Google</button>
+            <input type="text" id="gsheetsSearchInput" placeholder="Spreadsheet name..." />
+            <button class="gsheets-btn" id="gsheetsSearchBtn" onclick="gdriveSearch()" disabled>Load</button>
+            <div class="gsheets-status" id="gsheetsStatus"></div>
+        </div>
+
+        <div id="table-container">
+            <p>Loading M'Cheyne plan&hellip;</p>
+        </div>
+    </div>
+
+    <div id="sheetPickerOverlay" class="sheet-picker-overlay" onclick="closeSheetPicker()">
+        <div class="sheet-picker-modal" onclick="event.stopPropagation()">
+            <div class="sheet-picker-header">
+                <span>Select a Sheet</span>
+                <button onclick="closeSheetPicker()">&#10005;</button>
+            </div>
+            <div class="sheet-picker-list" id="sheetPickerList"></div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast-notification">Saved</div>
+
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js'></script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js'></script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'></script>
+
+    <script>
+        // ============ CONFIG ============
+        const BIBLE_APP_URL = 'https://bible-cross-reference.vercel.app/';
+        const LS_MARKS_KEY = 'mcheyne-marks-v1';
+        const LS_THEME_KEY = 'bible-plan-theme';
+        const DEFAULT_PLAN_URL = 'mcheyne.csv';
+
+        // ============ STATE ============
+        var planHeader = [];
+        var planRows = [];
+        var marks = {};
+        var currentDay = null;
+
+        // ============ UTILITIES ============
+        function showToast(message) {
+            var t = document.getElementById('toast');
+            t.textContent = message || 'Saved';
+            t.classList.add('show');
+            setTimeout(function() { t.classList.remove('show'); }, 1400);
+        }
+
+        function escHtml(s) {
+            return String(s == null ? '' : s)
+                .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+
+        function findColumnIndex(name, fallback) {
+            var idx = planHeader.findIndex(function(h) {
+                return String(h || '').toLowerCase() === name;
+            });
+            return idx === -1 ? fallback : idx;
+        }
+
+        // ============ REFERENCE PARSING ============
+        // mcheyne.json uses some non-canonical book tokens. After lowercasing and
+        // stripping spaces, map the stragglers to the bible app's URL convention.
+        var BOOK_ALIASES = {
+            'psalm': 'psalms',
+            'songofsongs': 'songofsolomon',
+            '1thes': '1thessalonians',
+            '2thes': '2thessalonians'
+        };
+
+        // "Genesis 1"         -> { book: "genesis",       chapter: "1",  verse: null }
+        // "Genesis 9-10"      -> { book: "genesis",       chapter: "9",  verse: null }
+        // "Luke 1:39-80"      -> { book: "luke",          chapter: "1",  verse: "39" }
+        // "1 Corinthians 13"  -> { book: "1corinthians",  chapter: "13", verse: null }
+        function parseRef(raw) {
+            if (!raw || typeof raw !== 'string') return null;
+            var ref = raw.trim();
+            if (!ref) return null;
+            var m = ref.match(/^(.+?)\s*(\d+)(?:-\d+)?(?::(\d+)(?:-\d+)?)?$/);
+            if (!m) return null;
+            var bookRaw = m[1].trim().toLowerCase().replace(/\s+/g, '');
+            var book = BOOK_ALIASES[bookRaw] || bookRaw;
+            return { book: book, chapter: m[2], verse: m[3] || null };
+        }
+
+        function refToUrl(raw) {
+            var p = parseRef(raw);
+            if (!p) return null;
+            var chapterPart = p.verse ? (p.chapter + ':' + p.verse) : p.chapter;
+            return BIBLE_APP_URL + '?' + p.book + '&' + chapterPart;
+        }
+
+        // ============ MARKS (localStorage) ============
+        function loadMarks() {
+            try {
+                var raw = localStorage.getItem(LS_MARKS_KEY);
+                marks = raw ? JSON.parse(raw) : {};
+            } catch (e) { marks = {}; }
+            if (!marks || typeof marks !== 'object') marks = {};
+        }
+
+        function saveMarks() {
+            try { localStorage.setItem(LS_MARKS_KEY, JSON.stringify(marks)); } catch (e) {}
+        }
+
+        function isDayRead(day) {
+            return !!marks[String(day)];
+        }
+
+        function toggleDay(day) {
+            var key = String(day);
+            if (marks[key]) delete marks[key];
+            else marks[key] = true;
+            saveMarks();
+        }
+
+        // Imported CSV marks merge INTO localStorage (file is a portable snapshot).
+        function mergeCsvMarksIntoStorage(rows, readColIdx, dayColIdx) {
+            rows.forEach(function(row) {
+                var day = row[dayColIdx];
+                var val = row[readColIdx];
+                if (day == null || day === '') return;
+                if (val && String(val).trim()) {
+                    marks[String(day)] = true;
+                }
+            });
+            saveMarks();
+        }
+
+        // ============ TABLE RENDER ============
+        function renderPlanTable() {
+            var container = document.getElementById('table-container');
+            if (!planHeader.length || !planRows.length) {
+                container.innerHTML = '<p>No plan loaded.</p>';
+                return;
+            }
+
+            var dayIdx = findColumnIndex('day', 0);
+            var readIdx = findColumnIndex('read', planHeader.length - 1);
+
+            var html = '<div style="overflow-x:auto"><table id="plan-table" class="table table-bordered table-striped"><thead><tr>';
+            planHeader.forEach(function(h, i) {
+                var cls = 'col-ref-h';
+                if (i === dayIdx) cls = 'col-day';
+                else if (i === readIdx) cls = 'col-read';
+                html += '<th class="' + cls + '">' + escHtml(h) + '</th>';
+            });
+            html += '</tr></thead><tbody>';
+
+            planRows.forEach(function(row) {
+                var day = row[dayIdx];
+                var read = isDayRead(day);
+                html += '<tr class="' + (read ? 'is-read' : '') + '" data-day="' + escHtml(day) + '">';
+                row.forEach(function(cell, i) {
+                    if (i === dayIdx) {
+                        html += '<td class="col-day">' + escHtml(cell) + '</td>';
+                    } else if (i === readIdx) {
+                        html += '<td class="col-read" data-day="' + escHtml(day) + '">' + (read ? 'X' : '') + '</td>';
+                    } else {
+                        var refText = cell == null ? '' : String(cell);
+                        html += '<td class="col-ref" data-ref="' + escHtml(refText) + '" data-day="' + escHtml(day) + '">' + escHtml(refText) + '</td>';
+                    }
+                });
+                html += '</tr>';
+            });
+            html += '</tbody></table></div>';
+            container.innerHTML = html;
+
+            container.querySelectorAll('.col-ref').forEach(function(td) {
+                td.addEventListener('click', function() {
+                    var ref = this.dataset.ref;
+                    var url = refToUrl(ref);
+                    if (!url) {
+                        showToast('Could not parse: ' + ref);
+                        return;
+                    }
+                    currentDay = parseInt(this.dataset.day, 10) || currentDay;
+                    window.open(url, '_blank', 'noopener');
+                });
+            });
+
+            container.querySelectorAll('.col-read').forEach(function(td) {
+                td.addEventListener('click', function() {
+                    var day = this.dataset.day;
+                    toggleDay(day);
+                    var read = isDayRead(day);
+                    this.textContent = read ? 'X' : '';
+                    var tr = this.closest('tr');
+                    if (tr) tr.classList.toggle('is-read', read);
+                    showToast(read ? 'Day ' + day + ' marked read' : 'Day ' + day + ' unmarked');
+                });
+            });
+        }
+
+        // ============ NAVIGATION ============
+        function jumpToRow(day) {
+            if (day == null) return;
+            var tr = document.querySelector('#plan-table tbody tr[data-day="' + day + '"]');
+            if (!tr) return;
+            document.querySelectorAll('#plan-table tr.highlight-row').forEach(function(el) {
+                el.classList.remove('highlight-row');
+            });
+            tr.classList.add('highlight-row');
+            tr.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            currentDay = parseInt(day, 10);
+        }
+
+        function firstUnreadDay() {
+            var dayIdx = findColumnIndex('day', 0);
+            for (var i = 0; i < planRows.length; i++) {
+                var d = planRows[i][dayIdx];
+                if (!isDayRead(d)) return d;
+            }
+            return null;
+        }
+
+        function jumpFirstUnread() {
+            var d = firstUnreadDay();
+            if (d == null) { showToast('All days marked read!'); return; }
+            jumpToRow(d);
+        }
+
+        function jumpNextUnread() {
+            var dayIdx = findColumnIndex('day', 0);
+            var start = currentDay != null ? currentDay : 0;
+            for (var i = 0; i < planRows.length; i++) {
+                var d = planRows[i][dayIdx];
+                var dNum = parseInt(d, 10);
+                if (dNum > start && !isDayRead(d)) { jumpToRow(d); return; }
+            }
+            for (var j = 0; j < planRows.length; j++) {
+                var d2 = planRows[j][dayIdx];
+                if (!isDayRead(d2)) { jumpToRow(d2); return; }
+            }
+            showToast('All days marked read!');
+        }
+
+        function jumpPrevUnread() {
+            var dayIdx = findColumnIndex('day', 0);
+            var start = currentDay != null ? currentDay : (planRows.length + 1);
+            for (var i = planRows.length - 1; i >= 0; i--) {
+                var d = planRows[i][dayIdx];
+                var dNum = parseInt(d, 10);
+                if (dNum < start && !isDayRead(d)) { jumpToRow(d); return; }
+            }
+            for (var j = planRows.length - 1; j >= 0; j--) {
+                var d2 = planRows[j][dayIdx];
+                if (!isDayRead(d2)) { jumpToRow(d2); return; }
+            }
+            showToast('All days marked read!');
+        }
+
+        // ============ DOWNLOAD CSV ============
+        function downloadCsv() {
+            if (!planHeader.length || !planRows.length) {
+                showToast('Nothing to download');
+                return;
+            }
+            var dayIdx = findColumnIndex('day', 0);
+            var readIdx = findColumnIndex('read', planHeader.length - 1);
+
+            function csvField(v) {
+                var s = v == null ? '' : String(v);
+                if (/[",\n\r]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+                return s;
+            }
+
+            var lines = [planHeader.map(csvField).join(',')];
+            planRows.forEach(function(row) {
+                var out = row.slice();
+                var day = out[dayIdx];
+                out[readIdx] = isDayRead(day) ? 'X' : '';
+                lines.push(out.map(csvField).join(','));
+            });
+            var blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+            var a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'mcheyne.csv';
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(function() {
+                document.body.removeChild(a);
+                URL.revokeObjectURL(a.href);
+            }, 100);
+            showToast('Downloaded');
+        }
+
+        // ============ DATA LOADING ============
+        function setPlanFromPapaData(data) {
+            if (!data || !data.length) {
+                document.getElementById('table-container').innerHTML = '<p>No data to display</p>';
+                return;
+            }
+            planHeader = data[0].map(function(c) { return c == null ? '' : String(c); });
+            planRows = data.slice(1).filter(function(r) { return r && r.length; });
+
+            var dayIdx = findColumnIndex('day', 0);
+            var readIdx = findColumnIndex('read', planHeader.length - 1);
+            mergeCsvMarksIntoStorage(planRows, readIdx, dayIdx);
+
+            renderPlanTable();
+        }
+
+        async function autoLoadPlan() {
+            try {
+                var resp = await fetch(DEFAULT_PLAN_URL);
+                if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                var text = await resp.text();
+                Papa.parse(text, {
+                    header: false,
+                    skipEmptyLines: true,
+                    complete: function(results) { setPlanFromPapaData(results.data); }
+                });
+            } catch (err) {
+                document.getElementById('table-container').innerHTML =
+                    '<p>Could not auto-load ' + DEFAULT_PLAN_URL + ' &mdash; upload a CSV to get started.<br><small>' + escHtml(err.message || err) + '</small></p>';
+            }
+        }
+
+        // ============ FILE UPLOAD ============
+        var pendingWorkbook = null;
+        var currentWorkbook = null;
+
+        function handleFileSelect(evt) {
+            var file = evt.target.files[0];
+            if (!file) return;
+            currentWorkbook = null;
+            document.getElementById('chooseSheetBtn').style.display = 'none';
+
+            var ext = file.name.split('.').pop().toLowerCase();
+            if (ext === 'xlsx' || ext === 'xls') {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    var data = new Uint8Array(e.target.result);
+                    var workbook = XLSX.read(data, { type: 'array' });
+                    var sheetNames = workbook.SheetNames;
+                    if (sheetNames.length === 1) {
+                        loadSheet(workbook, sheetNames[0]);
+                    } else {
+                        currentWorkbook = workbook;
+                        pendingWorkbook = workbook;
+                        document.getElementById('chooseSheetBtn').style.display = 'inline-block';
+                        showSheetPicker(sheetNames);
+                    }
+                };
+                reader.readAsArrayBuffer(file);
+            } else {
+                Papa.parse(file, {
+                    header: false,
+                    delimiter: ',',
+                    skipEmptyLines: true,
+                    complete: function(results) { setPlanFromPapaData(results.data); }
+                });
+            }
+        }
+
+        function loadSheet(workbook, sheetName) {
+            var ws = workbook.Sheets[sheetName];
+            var csv = XLSX.utils.sheet_to_csv(ws);
+            Papa.parse(csv, {
+                header: false,
+                skipEmptyLines: true,
+                complete: function(results) { setPlanFromPapaData(results.data); }
+            });
+        }
+
+        function showSheetPicker(sheetNames) {
+            var listEl = document.getElementById('sheetPickerList');
+            listEl.innerHTML = sheetNames.map(function(name) {
+                return '<div class="sheet-picker-item" onclick="pickSheet(\'' + name.replace(/'/g, "\\'") + '\')">' +
+                    escHtml(name) + '</div>';
+            }).join('');
+            document.getElementById('sheetPickerOverlay').classList.add('open');
+        }
+
+        function closeSheetPicker() {
+            document.getElementById('sheetPickerOverlay').classList.remove('open');
+            pendingWorkbook = null;
+        }
+
+        function pickSheet(sheetName) {
+            if (pendingWorkbook) {
+                loadSheet(pendingWorkbook, sheetName);
+                closeSheetPicker();
+            }
+        }
+
+        function reopenSheetPicker() {
+            if (currentWorkbook) {
+                pendingWorkbook = currentWorkbook;
+                showSheetPicker(currentWorkbook.SheetNames);
+            }
+        }
+
+        // ============ GOOGLE SHEETS ============
+        const GDRIVE_CLIENT_ID = '1095683227908-7ro25k16mprkf408i3lf583gti8v759b.apps.googleusercontent.com';
+        const GDRIVE_SCOPES = 'https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/spreadsheets.readonly';
+
+        let gdriveAccessToken = null;
+        let gdriveTokenClient = null;
+
+        function setGsheetsStatus(msg) {
+            document.getElementById('gsheetsStatus').textContent = msg || '';
+        }
+
+        function gdriveInitClient() {
+            if (window.google && window.google.accounts) {
+                gdriveTokenClient = window.google.accounts.oauth2.initTokenClient({
+                    client_id: GDRIVE_CLIENT_ID,
+                    scope: GDRIVE_SCOPES,
+                    callback: function(response) {
+                        if (response.access_token) {
+                            gdriveAccessToken = response.access_token;
+                            document.getElementById('gsheetsAuthBtn').textContent = 'Sign Out';
+                            document.getElementById('gsheetsSearchBtn').disabled = false;
+                            setGsheetsStatus('Signed in. Enter a name and click Load.');
+                        }
+                    },
+                });
+            }
+        }
+
+        var checkGoogle = setInterval(function() {
+            if (window.google && window.google.accounts) {
+                clearInterval(checkGoogle);
+                gdriveInitClient();
+            }
+        }, 200);
+
+        function gdriveSignIn() {
+            if (gdriveAccessToken) {
+                gdriveAccessToken = null;
+                document.getElementById('gsheetsAuthBtn').textContent = 'Sign in with Google';
+                document.getElementById('gsheetsSearchBtn').disabled = true;
+                setGsheetsStatus('Signed out');
+                return;
+            }
+            if (gdriveTokenClient) {
+                gdriveTokenClient.requestAccessToken();
+            } else {
+                setGsheetsStatus('Google API not loaded yet. Try again.');
+            }
+        }
+
+        async function gdriveSearch() {
+            var searchTerm = document.getElementById('gsheetsSearchInput').value.trim();
+            if (!searchTerm) { setGsheetsStatus('Enter a spreadsheet name'); return; }
+            try {
+                setGsheetsStatus('Searching...');
+                var query = encodeURIComponent("name contains '" + searchTerm + "' and trashed=false and mimeType='application/vnd.google-apps.spreadsheet'");
+                var resp = await fetch('https://www.googleapis.com/drive/v3/files?q=' + query + '&fields=files(id,name)&orderBy=name', {
+                    headers: { Authorization: 'Bearer ' + gdriveAccessToken }
+                });
+                if (!resp.ok) throw new Error('Search failed');
+                var data = await resp.json();
+                if (!data.files || data.files.length === 0) {
+                    setGsheetsStatus('No spreadsheet matching "' + searchTerm + '"');
+                    return;
+                }
+                var file = data.files[0];
+                setGsheetsStatus('Loading "' + file.name + '"...');
+                await loadGoogleSpreadsheet(file.id, file.name);
+            } catch (err) {
+                setGsheetsStatus('Error: ' + err.message);
+            }
+        }
+
+        async function loadGoogleSpreadsheet(fileId, fileName) {
+            try {
+                var exportMime = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+                var resp = await fetch('https://www.googleapis.com/drive/v3/files/' + fileId + '/export?mimeType=' + encodeURIComponent(exportMime), {
+                    headers: { Authorization: 'Bearer ' + gdriveAccessToken }
+                });
+                if (!resp.ok) throw new Error('Export failed');
+                var arrayBuffer = await resp.arrayBuffer();
+                var workbook = XLSX.read(new Uint8Array(arrayBuffer), { type: 'array' });
+
+                currentWorkbook = workbook;
+                document.getElementById('chooseSheetBtn').style.display = 'none';
+
+                var sheetNames = workbook.SheetNames;
+                if (sheetNames.length === 1) {
+                    loadSheet(workbook, sheetNames[0]);
+                } else {
+                    pendingWorkbook = workbook;
+                    document.getElementById('chooseSheetBtn').style.display = 'inline-block';
+                    showSheetPicker(sheetNames);
+                }
+                setGsheetsStatus('Loaded "' + fileName + '" — ' + sheetNames.length + ' sheet(s)');
+            } catch (err) {
+                setGsheetsStatus('Error: ' + err.message);
+            }
+        }
+
+        // ============ THEME TOGGLE ============
+        let isDarkMode = true;
+
+        function toggleTheme() {
+            isDarkMode = !isDarkMode;
+            const body = document.body;
+            const themeBtn = document.getElementById('themeToggle');
+            if (isDarkMode) {
+                body.classList.remove('light-mode');
+                themeBtn.innerHTML = '&#9788; Light';
+            } else {
+                body.classList.add('light-mode');
+                themeBtn.innerHTML = '&#9790; Dark';
+            }
+            localStorage.setItem(LS_THEME_KEY, isDarkMode ? 'dark' : 'light');
+        }
+
+        function loadTheme() {
+            const savedTheme = localStorage.getItem(LS_THEME_KEY);
+            if (savedTheme === 'light') {
+                isDarkMode = false;
+                document.body.classList.add('light-mode');
+                document.getElementById('themeToggle').innerHTML = '&#9790; Dark';
+            }
+        }
+
+        // ============ INITIALIZATION ============
+        $(document).ready(async function() {
+            $('#csv-file').change(handleFileSelect);
+            loadTheme();
+            loadMarks();
+            await autoLoadPlan();
+            setTimeout(function() {
+                var d = firstUnreadDay();
+                if (d != null) jumpToRow(d);
+            }, 300);
+        });
+    </script>
+</body>
+</html>
