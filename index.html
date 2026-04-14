@@ -468,7 +468,7 @@
     <button class="theme-toggle-btn" id="themeToggle" onclick="toggleTheme()">&#9788; Light</button>
 
     <div class="main-content">
-        <h1>M'Cheyne Reading Plan</h1>
+        <h1>Reformation Reading Plan</h1>
         <p class="lead">Click a reading to open it in the Bible app. Click the <strong>Read</strong> column to mark a day done.</p>
 
         <div class="plan-controls">
@@ -492,7 +492,7 @@
         </div>
 
         <div id="table-container">
-            <p>Loading M'Cheyne plan&hellip;</p>
+            <p>Loading Reformation plan&hellip;</p>
         </div>
     </div>
 
@@ -513,7 +513,7 @@
                 <button onclick="closeStartDateModal()">&#10005;</button>
             </div>
             <div class="start-date-body">
-                <p class="start-date-hint">Pick the date you started (or plan to start) day&nbsp;1 of the M'Cheyne plan. We'll use it to compute today's reading.</p>
+                <p class="start-date-hint">Pick the date you started (or plan to start) day&nbsp;1 of the Reformation plan. We'll use it to compute today's reading.</p>
                 <input type="date" id="startDateInput" class="start-date-input" oninput="updateStartDateInfo()" />
                 <div id="startDateInfo" class="start-date-info"></div>
                 <div class="start-date-actions">
@@ -534,10 +534,10 @@
     <script>
         // ============ CONFIG ============
         const BIBLE_APP_URL = 'https://bible-cross-reference.vercel.app/';
-        const LS_MARKS_KEY = 'mcheyne-marks-v1';
+        const LS_MARKS_KEY = 'reformation-marks-v1';
         const LS_THEME_KEY = 'bible-plan-theme';
-        const LS_START_DATE_KEY = 'mcheyne-start-date-v1';
-        const DEFAULT_PLAN_URL = 'mcheyne.csv';
+        const LS_START_DATE_KEY = 'reformation-start-date-v1';
+        const DEFAULT_PLAN_URL = 'reformation_plan.csv';
         const DOW_SHORT = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
         // ============ STATE ============
@@ -895,7 +895,7 @@
             var blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8' });
             var a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
-            a.download = 'mcheyne.csv';
+            a.download = 'reformation_plan.csv';
             document.body.appendChild(a);
             a.click();
             setTimeout(function() {
