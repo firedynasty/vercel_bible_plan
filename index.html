@@ -188,6 +188,43 @@
             min-height: 16px;
         }
 
+        .reading-search-wrapper {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+            padding: 12px;
+            background: rgba(255,255,255,0.04);
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .reading-search-wrapper input[type="text"] {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 6px;
+            padding: 8px 12px;
+            color: #fff;
+            font-size: 14px;
+            min-width: 280px;
+        }
+
+        .reading-search-wrapper input[type="text"]::placeholder {
+            color: rgba(255,255,255,0.5);
+        }
+
+        .reading-nav-btn {
+            padding: 8px 12px !important;
+            min-width: 36px;
+        }
+
+        .reading-search-status {
+            font-size: 12px;
+            color: rgba(255,255,255,0.7);
+        }
+
         #table-container {
             background: rgba(255,255,255,0.05);
             border-radius: 12px;
@@ -314,6 +351,10 @@
         body.light-mode .gsheets-btn { color: #1a1a1a; background: rgba(66,133,244,0.1); }
         body.light-mode .gsheets-btn:hover:not(:disabled) { background: rgba(66,133,244,0.2); }
         body.light-mode .gsheets-status { color: rgba(0,0,0,0.6); }
+        body.light-mode .reading-search-wrapper { background: rgba(0,0,0,0.03); border-color: rgba(0,0,0,0.08); }
+        body.light-mode .reading-search-wrapper input[type="text"] { background: #fff; border-color: rgba(0,0,0,0.2); color: #1a1a1a; }
+        body.light-mode .reading-search-wrapper input[type="text"]::placeholder { color: rgba(0,0,0,0.4); }
+        body.light-mode .reading-search-status { color: rgba(0,0,0,0.6); }
         body.light-mode .theme-toggle-btn { background: #333; color: #fff; }
         body.light-mode .theme-toggle-btn:hover { background: #555; }
 
@@ -489,6 +530,14 @@
             <input type="text" id="gsheetsSearchInput" placeholder="Spreadsheet name..." />
             <button class="gsheets-btn" id="gsheetsSearchBtn" onclick="gdriveSearch()" disabled>Load</button>
             <div class="gsheets-status" id="gsheetsStatus"></div>
+        </div>
+
+        <div class="reading-search-wrapper">
+            <input type="text" id="readingSearchInput" placeholder="Find a reading (e.g. Genesis 1, Psalm 23)..." />
+            <button class="gsheets-btn" id="readingSearchBtn" onclick="searchReading()">Find</button>
+            <button class="gsheets-btn reading-nav-btn" id="readingPrevBtn" onclick="searchReadingPrev()" style="display:none;">&larr;</button>
+            <button class="gsheets-btn reading-nav-btn" id="readingNextBtn" onclick="searchReadingNext()" style="display:none;">&rarr;</button>
+            <span class="reading-search-status" id="readingSearchStatus"></span>
         </div>
 
         <div id="table-container">
@@ -865,6 +914,83 @@
             }
             showToast('All days marked read!');
         }
+
+        // ============ READING SEARCH ============
+        var readingSearchMatches = [];
+        var readingSearchIdx = -1;
+
+        function searchReading() {
+            var query = document.getElementById('readingSearchInput').value.trim().toLowerCase();
+            var status = document.getElementById('readingSearchStatus');
+            var prevBtn = document.getElementById('readingPrevBtn');
+            var nextBtn = document.getElementById('readingNextBtn');
+            if (!query) { showToast('Enter a reading to search for'); return; }
+            if (!planRows.length) { showToast('No plan loaded'); return; }
+
+            var dayIdx = findColumnIndex('day', 0);
+            var readIdx = findColumnIndex('read', planHeader.length - 1);
+            readingSearchMatches = [];
+
+            planRows.forEach(function(row) {
+                row.forEach(function(cell, i) {
+                    if (i === dayIdx || i === readIdx) return;
+                    if (cell && String(cell).toLowerCase().indexOf(query) !== -1) {
+                        readingSearchMatches.push(row[dayIdx]);
+                    }
+                });
+            });
+
+            // deduplicate
+            var seen = {};
+            readingSearchMatches = readingSearchMatches.filter(function(d) {
+                if (seen[d]) return false;
+                seen[d] = true;
+                return true;
+            });
+
+            if (readingSearchMatches.length === 0) {
+                status.textContent = 'No matches found';
+                prevBtn.style.display = 'none';
+                nextBtn.style.display = 'none';
+                readingSearchIdx = -1;
+                return;
+            }
+
+            readingSearchIdx = 0;
+            jumpToSearchMatch();
+        }
+
+        function jumpToSearchMatch() {
+            var status = document.getElementById('readingSearchStatus');
+            var prevBtn = document.getElementById('readingPrevBtn');
+            var nextBtn = document.getElementById('readingNextBtn');
+            if (readingSearchMatches.length === 0) return;
+
+            var day = readingSearchMatches[readingSearchIdx];
+            jumpToRow(day);
+            status.textContent = (readingSearchIdx + 1) + ' of ' + readingSearchMatches.length;
+            prevBtn.style.display = readingSearchMatches.length > 1 ? '' : 'none';
+            nextBtn.style.display = readingSearchMatches.length > 1 ? '' : 'none';
+        }
+
+        function searchReadingNext() {
+            if (readingSearchMatches.length === 0) return;
+            readingSearchIdx = (readingSearchIdx + 1) % readingSearchMatches.length;
+            jumpToSearchMatch();
+        }
+
+        function searchReadingPrev() {
+            if (readingSearchMatches.length === 0) return;
+            readingSearchIdx = (readingSearchIdx - 1 + readingSearchMatches.length) % readingSearchMatches.length;
+            jumpToSearchMatch();
+        }
+
+        document.getElementById('readingSearchInput').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                searchReading();
+            }
+        });
 
         // ============ DOWNLOAD CSV ============
         function downloadCsv() {
